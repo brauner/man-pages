@@ -13,73 +13,96 @@ setns \- reassociate thread with a namespace
 .BR "#define _GNU_SOURCE" "             /* See feature_test_macros(7) */"
 .B #include <sched.h>
 .PP
-.BI "int setns(int " fd ", int " nstype );
+.BI "int setns(int " fd ", int " flags );
 .fi
 .SH DESCRIPTION
-Given a file descriptor referring to a namespace,
-reassociate the calling thread with that namespace.
+Reassociate the calling thread with namespaces.
 .PP
 The
 .I fd
-argument is a file descriptor referring to one of the namespace entries in a
+argument can either be a namespace file descriptor (nsfd) referring to one of
+the namespace entries in a
 .I /proc/[pid]/ns/
-directory; see
+directory (see
 .BR namespaces (7)
 for further information on
-.IR /proc/[pid]/ns/ .
-The calling thread will be reassociated with the corresponding namespace,
-subject to any constraints imposed by the
-.I nstype
+.IR /proc/[pid]/ns/)
+or a pidfd (see
+.BR pidfd_open (2), clone3 (2)).
+
+A nsfd serves as a token for a namespace type, i.e. a nsfd uniquely identifies an
+instance of a given namespace type. If the
+.I fd
+refers to a nsfd the calling thread will be reassociated with the namespace it
+identifies.
+
+A pidfd by itself does not serve as a
+namespace token. It rather uniquely identifies a process on the system. Because
+every process is associated with a set of namespaces a pidfd can be used to
+refer to the set or a subset of the namespace of the process by raising the
+corresponding namespace flags in the
+.I flags
 argument.
-.PP
-The
-.I nstype
-argument specifies which type of namespace
-the calling thread may be reassociated with.
-This argument can have one of the following values:
+
+If
+.I fd
+refers to a nsfd the
+.I flags
+argument must be set to a single namespace flag. If it
+refers to a pidfd at least one namespace flag must be raised:
 .TP
 .BR 0
-Allow any type of namespace to be joined.
+Allow any type of namespace to be joined (Only allowed with nsfds.). 
 .TP
 .BR CLONE_NEWCGROUP " (since Linux 4.6)"
+If
 .I fd
-must refer to a cgroup namespace.
+is a nsfd must refer to a cgroup namespace.
 .TP
 .BR CLONE_NEWIPC " (since Linux 3.0)"
+If
 .I fd
-must refer to an IPC namespace.
+is a nsfd must refer to an IPC namespace.
 .TP
 .BR CLONE_NEWNET " (since Linux 3.0)"
+If
 .I fd
-must refer to a network namespace.
+is a nsfd must refer to a network namespace.
 .TP
 .BR CLONE_NEWNS " (since Linux 3.8)"
+If
 .I fd
-must refer to a mount namespace.
+is a nsfd must refer to a mount namespace.
 .TP
 .BR CLONE_NEWPID " (since Linux 3.8)"
+If
 .I fd
-must refer to a descendant PID namespace.
+is a nsdfd must refer to a descendant PID namespace.
 .TP
 .BR CLONE_NEWTIME " (since Linux 5.6)"
+If
 .I fd
-must refer to a time namespace.
+is a nsfd must refer to a time namespace.
 .TP
 .BR CLONE_NEWUSER " (since Linux 3.8)"
+If
 .I fd
-must refer to a user namespace.
+is a nsfd must refer to a user namespace.
 .TP
 .BR CLONE_NEWUTS " (since Linux 3.0)"
+If
 .I fd
-must refer to a UTS namespace.
+is a nsfd must refer to a UTS namespace.
 .PP
-Specifying
-.I nstype
+If
+.I fd
+is a nsfd, Specifying
+.I flags
 as 0 suffices if the caller knows (or does not care)
 what type of namespace is referred to by
 .IR fd .
 Specifying a nonzero value for
-.I nstype
+.I flags
 is useful if the caller does not know what type of namespace is referred to by
 .IR fd
 and wants to ensure that the namespace is of a particular type.
@@ -206,7 +229,7 @@ is not a valid file descriptor.
 .B EINVAL
 .I fd
 refers to a namespace whose type does not match that specified in
-.IR nstype .
+.IR flags .
 .TP
 .B EINVAL
 There is problem with reassociating
