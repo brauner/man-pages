@@ -1,0 +1,8 @@
+# repository owner (e.g. your name)
+owner=Christian Brauner
+# repository description
+desc=Christian Brauner's man-page tree
+# Link to the project home page
+homepage=https://man7.org/linux/man-pages/
+# Default branch to show, if it's not master
+defbranch=master
